@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--  todo 把demo替换成项目名  -->
+    <contextName>demo-logging</contextName>
+
+    <!--设置变量，下面有用到。含义是日志保存路径-->
+    <springProperty scope="context" name="LOG_PATH" source="demo.log-path" defaultValue="demologs"/>
+    <springProperty scope="context" name="DEPLOY_ENV" source="spring.profiles"/>
+    <springProperty scope="context" name="ROOT_LEVEL" source="demo.log-root-level" defaultValue="info"/>
+
+    <property name="maxFileSize" value="100MB"/>
+
+    <!--输出到控制台-->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 级别过滤 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+        <!--日志输出格式-->
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--输出到文件-->
+    <if condition='p("DEPLOY_ENV").contains("test")'>
+        <then>
+            <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <!--日志名，用到了上面配置的路径-->
+                <file>${LOG_PATH}/demo-trace.log</file>
+                <!--根据yyyy-MM-dd所以是每天新建文件，也可以设置其它格式，如每月或每分-->
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LOG_PATH}/demo-trace.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                    <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                        <maxFileSize>100MB</maxFileSize>
+                    </timeBasedFileNamingAndTriggeringPolicy>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+    <if condition='p("DEPLOY_ENV").contains("prod")'>
+        <then>
+            <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <!--日志名，用到了上面配置的路径-->
+                <file>${LOG_PATH}/demo-trace.log</file>
+                <!--根据yyyy-MM-dd所以是每天新建文件，也可以设置其它格式，如每月或每分-->
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LOG_PATH}/demo-trace.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                    <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                        <maxFileSize>100MB</maxFileSize>
+                    </timeBasedFileNamingAndTriggeringPolicy>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+
+    <!--设置日志隔离级别-->
+    <root level="${ROOT_LEVEL}}">
+        <appender-ref ref="console"/>
+        <if condition='p("DEPLOY_ENV").contains("test")'>
+            <then>
+                <appender-ref ref="file"/>
+            </then>
+        </if>
+        <if condition='p("DEPLOY_ENV").contains("prod")'>
+            <then>
+                <appender-ref ref="file"/>
+            </then>
+        </if>
+    </root>
+</configuration>
