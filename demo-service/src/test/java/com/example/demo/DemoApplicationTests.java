@@ -1,19 +1,33 @@
 package com.example.demo;
 
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.extra.template.Engine;
+import cn.hutool.extra.template.Template;
+import cn.hutool.extra.template.TemplateConfig;
+import cn.hutool.extra.template.TemplateUtil;
 import com.example.demo.model.User;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.pdf.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.StringEscapeUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
+import java.awt.*;
+import java.io.*;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @SpringBootTest
+@Slf4j
 class DemoApplicationTests {
-
-    @Test
-    void contextLoads() {
-    }
 
     /**
      * stream流
@@ -52,11 +66,6 @@ class DemoApplicationTests {
         Map<String, List<User>> groupMap = userList.stream().collect(Collectors.groupingBy(User::getAddress));
 
         System.out.println("");
-    }
-
-    public void test2() {
-        ThreadLocal<Object> threadLocal = new ThreadLocal<>();
-        threadLocal.set("");
     }
 
     //---------------------------------------------↓十种排序算法↓----------------------------------------------//
@@ -654,7 +663,6 @@ class DemoApplicationTests {
         }
     }
 
-
     /**
      * 算法测试
      */
@@ -669,4 +677,87 @@ class DemoApplicationTests {
         KnapsackProblem(new int[]{1,3,4,6,7},new int[]{50,200,400,550,800},10);
     }
 
+    //---------------------------------------------↓根据HTML生成PDF↓----------------------------------------------//
+
+    //PDF保存路径(绝对路径)
+    public String pdf_save_path = "/pdf/export/";
+    //PDF字体路径(相对路径)
+    public String pdf_font_path = "pdf/font/MicrosoftYaHei.ttf";
+    //模板路径(相对路径)
+    public String pdf_tmpl_path = "pdf/tmpl/";
+    //模板名称
+    public String pdf_tmpl_name = "demo.ftl";
+    //PDF加密密钥
+    public String pdf_secret = "qwe123!@#.";
+
+    @Test
+    public void createPdf(){
+        //读取模板
+        Engine engine = TemplateUtil.createEngine(new TemplateConfig(pdf_tmpl_path, TemplateConfig.ResourceMode.CLASSPATH));
+        Template template = engine.getTemplate(pdf_tmpl_name);
+
+        HashMap<String, Object> data = Maps.newHashMap();
+        //添加数据
+        HashMap<String, Object> user = Maps.newHashMap();
+        user.put("name","admin");
+        user.put("age","18");
+        user.put("gender","男");
+        data.put("user",user);
+
+        //根据模板和数据生成html
+        String html = template.render(data);
+        //对html内容进行反转义,例如将&ldquo;和&rdquo;转为双引号,防止XML解析异常
+        html = StringEscapeUtils.unescapeHtml4(html);
+        String fileName = "demo.pdf";
+        try (BufferedOutputStream out = FileUtil.getOutputStream(pdf_save_path + fileName);
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ITextRenderer iTextRenderer = new ITextRenderer();
+            iTextRenderer.getFontResolver().addFont(pdf_font_path, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
+            iTextRenderer.setDocumentFromString(html);
+            iTextRenderer.layout();
+            iTextRenderer.createPDF(baos);
+            iTextRenderer.finishPDF();
+            //添加水印(可添加多个)
+            ArrayList<String> texts = Lists.newArrayList(DateUtil.now(), "我是水印1", "我是水印2");
+            InputStream in = new ByteArrayInputStream(baos.toByteArray());
+            baos.flush();
+            addWaterMark(in, out, texts);
+            log.info("success!");
+        } catch (Exception e) {
+            log.error("=====创建pdf异常：", e);
+        }
+    }
+
+    /**
+     * 添加水印
+     *
+     * @param arr
+     */
+    private void addWaterMark(InputStream in, OutputStream out, List<String> arr) throws DocumentException, IOException {
+        PdfReader pdfReader = new PdfReader(in);
+        PdfStamper pdfStamper = new PdfStamper(pdfReader, out);
+        pdfStamper.setEncryption(null, pdf_secret.getBytes(), PdfWriter.ENCRYPTION_AES_128, false);
+        int pages = pdfReader.getNumberOfPages() + 1;
+        // 设置水印透明度
+        PdfGState gs = new PdfGState();
+        gs.setFillOpacity(0.3f);
+        for (int i = 1; i < pages; i++) {
+            PdfContentByte underContent = pdfStamper.getOverContent(i);
+            underContent.beginText();
+            underContent.setFontAndSize(BaseFont.createFont(pdf_font_path, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED), 12);
+            underContent.setGState(gs);
+            underContent.setColorFill(Color.blue);
+            for (int m = 0; m < 6; m++) {
+                for (int j = 0; j < 6; j++) {
+                    for (int n = 0; n < arr.size(); n++) {
+                        underContent.showTextAlignedKerned(Element.ALIGN_LEFT, arr.get(n), 100 * j, (n + 1) * 20 + 200 * m, 45);
+                    }
+                }
+            }
+            underContent.endText();
+            underContent.stroke();
+        }
+        pdfStamper.close();
+        pdfReader.close();
+    }
 }
