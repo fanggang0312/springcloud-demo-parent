@@ -664,6 +664,99 @@ class DemoApplicationTests {
     }
 
     /**
+     * 字符串模式匹配--暴力破解法
+     *
+     * @param s 主串
+     * @param t 模式串
+     * @return 如果找到，返回在主串中第一个字符出现的下标，否则为-1
+     */
+    public static int bruteForceMatch(String s, String t) {
+        char[] s_arr = s.toCharArray();
+        char[] t_arr = t.toCharArray();
+        // 主串的位置
+        int i = 0;
+        // 模式串的位置
+        int j = 0;
+        while (i < s_arr.length && j < t_arr.length) {
+            if (s_arr[i] == t_arr[j]) {
+                // 当两个字符相同，就比较下一个
+                i++;
+                j++;
+            } else {
+                // 一旦不匹配，i后退，j归0
+                i = i - j + 1;
+                j = 0;
+            }
+        }
+        if (j == t_arr.length) {
+            return i - j;
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     * 字符串模式匹配--KMP算法
+     * <p>
+     * 利用已经部分匹配这个有效信息，保持i指针不回溯，通过修改j指针，让模式串尽量地移动到有效的位置。
+     * 整个KMP的重点就在于当某一个字符与主串不匹配时，要将j指针移动到哪
+     * <p>
+     * 当T[i] != P[j]时
+     * 有T[i-j ~ i-1] == P[0 ~ j-1]
+     * 由P[0 ~ k-1] == P[j-k ~ j-1]
+     * 必然：T[i-k ~ i-1] == P[0 ~ k-1]
+     *
+     * @param s 主串
+     * @param t 模式串
+     * @return 若匹配成功，返回t在s中的位置（第一个相同字符对应的位置），若匹配失败，返回-1
+     */
+    public static int kmpMatch(String s, String t) {
+        char[] s_arr = s.toCharArray();
+        char[] t_arr = t.toCharArray();
+        int[] next = getNextArray(t_arr);
+        int i = 0, j = 0;
+        while (i < s_arr.length && j < t_arr.length) {
+            if (j == -1 || s_arr[i] == t_arr[j]) {
+                i++;
+                j++;
+            } else {
+                j = next[j];
+            }
+        }
+        if (j == t_arr.length) {
+            return i - j;
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     * 求出一个字符数组的next数组
+     *
+     * @param t 字符数组
+     * @return next数组
+     */
+    public static int[] getNextArray(char[] t) {
+        int[] next = new int[t.length];
+        next[0] = -1;
+        next[1] = 0;
+        int k;
+        for (int j = 2; j < t.length; j++) {
+            k = next[j - 1];
+            while (k != -1) {
+                if (t[j - 1] == t[k]) {
+                    next[j] = k + 1;
+                    break;
+                } else {
+                    k = next[k];
+                }
+                next[j] = 0;  //当k==-1而跳出循环时，next[j] = 0，否则next[j]会在break之前被赋值
+            }
+        }
+        return next;
+    }
+
+    /**
      * 算法测试
      */
     @Test
@@ -674,7 +767,11 @@ class DemoApplicationTests {
 
         hanoiTower(5, 'A', 'B', 'C');
 
-        KnapsackProblem(new int[]{1,3,4,6,7},new int[]{50,200,400,550,800},10);
+        KnapsackProblem(new int[]{1, 3, 4, 6, 7}, new int[]{50, 200, 400, 550, 800}, 10);
+
+        System.out.println(bruteForceMatch("abcabaabaabcacb", "abaabcac"));
+
+        System.out.println(kmpMatch("abcabaabaabcacb", "abaabcac"));
     }
 
     //---------------------------------------------↓根据HTML生成PDF↓----------------------------------------------//
@@ -691,7 +788,7 @@ class DemoApplicationTests {
     public String pdf_secret = "qwe123!@#.";
 
     @Test
-    public void createPdf(){
+    public void createPdf() {
         //读取模板
         Engine engine = TemplateUtil.createEngine(new TemplateConfig(pdf_tmpl_path, TemplateConfig.ResourceMode.CLASSPATH));
         Template template = engine.getTemplate(pdf_tmpl_name);
@@ -699,10 +796,10 @@ class DemoApplicationTests {
         HashMap<String, Object> data = Maps.newHashMap();
         //添加数据
         HashMap<String, Object> user = Maps.newHashMap();
-        user.put("name","admin");
-        user.put("age","18");
-        user.put("gender","男");
-        data.put("user",user);
+        user.put("name", "admin");
+        user.put("age", "18");
+        user.put("gender", "男");
+        data.put("user", user);
 
         //根据模板和数据生成html
         String html = template.render(data);
