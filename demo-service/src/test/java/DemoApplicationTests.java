@@ -1,5 +1,3 @@
-package com.example.demo;
-
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.extra.template.Engine;
@@ -21,6 +19,8 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 import java.awt.*;
 import java.io.*;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 @SpringBootTest
 @Slf4j
 class DemoApplicationTests {
+    
+    //VM options：-Djasypt.encryptor.password=qwer*1234*
 
     /**
      * stream流
@@ -857,4 +859,121 @@ class DemoApplicationTests {
         pdfStamper.close();
         pdfReader.close();
     }
+
+    //---------------------------------------------↓文件流上传文件↓----------------------------------------------//
+    @Test
+    public void doUploadFile() {
+        File file = new File("C:\\\\test\\\\111.jpg");
+
+        String url = "http://localhost:8081/demo-service/demo/doUploadFile?fileName=111.jpg";
+        StringBuilder result = new StringBuilder();
+        try {
+            // 服务器的域名
+            URL url1 = new URL(url);
+            HttpURLConnection conn = (HttpURLConnection) url1.openConnection();
+            // 设置为POST情
+            conn.setRequestMethod("POST");
+            // 发送POST请求必须设置如下两行
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            conn.setUseCaches(false);
+            // 设置请求头参数
+            conn.setRequestProperty("connection", "Keep-Alive");
+            conn.setRequestProperty("Charsert", "UTF-8");
+            conn.setRequestProperty("Content-Type", "application/octet-stream");
+
+            OutputStream out = new DataOutputStream(conn.getOutputStream());
+            // 上传文件
+            StringBuilder sb = new StringBuilder();
+            // 将参数头的数据写入到输出流中
+            out.write(sb.toString().getBytes());
+            // 数据输入流,用于读取文件数据
+            DataInputStream in = new DataInputStream(new FileInputStream(file));
+            byte[] bufferOut = new byte[1024 * 20];
+            int bytes = 0;
+            // 每次读8KB数据,并且将文件数据写入到输出流中
+            while ((bytes = in.read(bufferOut)) != -1) {
+                out.write(bufferOut, 0, bytes);
+            }
+            in.close();
+            out.flush();
+            out.close();
+
+
+            // 定义BufferedReader输入流来读取URL的响应
+            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                result.append(line); //这里读取的是上边url对应的上传文件接口的返回值，读取出来后，然后接着返回到前端，实现接口中调用接口的方式
+            }
+        } catch (Exception e) {
+            System.out.println("发送POST请求出现异常！" + e);
+            e.printStackTrace();
+        }
+        System.out.println(result);
+    }
+
+    //---------------------------------------------↓文件流下载文件↓----------------------------------------------//
+    @Test
+    public void doDownloadFile() throws IOException {
+        String requestUrl = "http://localhost:8081/demo-service/demo/doDownloadFile?fileName=222.xlsx";
+        //文件保存路径
+        String filePath = "C:\\opt\\hzzx\\zgyh\\download\\222.xlsx";
+
+        HttpURLConnection urlConnection = null;
+        InputStream inputStream = null;
+        BufferedInputStream bufferedInputStream = null;
+        FileOutputStream fileOutputStream = null;
+        BufferedOutputStream bufferedOutputStream = null;
+        try {
+            URL url = new URL(requestUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setConnectTimeout(60);
+            urlConnection.setDoOutput(true);
+            urlConnection.setDoInput(true);
+            urlConnection.setUseCaches(false);
+            urlConnection.connect();
+            File file = new File(filePath);
+            if (!file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+            }
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            inputStream = urlConnection.getInputStream();
+
+            bufferedInputStream = new BufferedInputStream(inputStream);
+            fileOutputStream = new FileOutputStream(filePath);
+            bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+
+            byte[] buf = new byte[1024 * 20];
+            int length = bufferedInputStream.read(buf);
+            while (-1 != length) {
+                bufferedOutputStream.write(buf, 0, length);
+                length = bufferedInputStream.read(buf);
+            }
+        } catch (Exception e) {
+            log.error("下载失败!: " + e);
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (bufferedInputStream != null) {
+                bufferedInputStream.close();
+            }
+            if (fileOutputStream != null) {
+                fileOutputStream.close();
+            }
+            if (bufferedOutputStream != null) {
+                bufferedOutputStream.close();
+            }
+            if (null != urlConnection) {
+                urlConnection.disconnect();
+            }
+        }
+        log.info("下载成功!");
+    }
+
 }

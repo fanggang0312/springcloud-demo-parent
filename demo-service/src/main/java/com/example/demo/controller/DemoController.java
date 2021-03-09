@@ -7,10 +7,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
 /**
@@ -39,6 +42,25 @@ public class DemoController {
         sysLog.setCreateTime(new Date());
 
         sysLogService.insertSysLog(sysLog);
-        return new ResultVO(200,"success",new Date().getTime(),sysLog);
+        return new ResultVO(200, "success", new Date().getTime(), sysLog);
+    }
+
+    /**
+     * 文件上传
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    @PostMapping("/doUploadFile")
+    public String uploadFile(HttpServletRequest request, HttpServletResponse response) {
+        return sysLogService.doUploadFile(request, response);
+    }
+
+    //http://localhost:8081/demo-service/demo/doDownloadFile?fileName=111.jpg
+
+    @PostMapping("/doDownloadFile")
+    public void downloadFile(HttpServletRequest request, HttpServletResponse response){
+        sysLogService.doDownloadFile(request,response);
     }
 }
