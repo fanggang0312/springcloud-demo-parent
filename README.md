@@ -1,6 +1,6 @@
 # SpringBoot+SpringCloud项目框架
 
-> * hikari，jasypt，mysql，mybatis-plus，generatorCode，pagehelper
+> * hikari，jasypt，mysql，mybatis-plus，generatorCode，pagehelper，mybatis-generator
 > * redis，lettuce
 > * eureka，feign，httpclient，okhttp，ribbon，hystrix
 > * 自定义注解，注解切面，接口方法切面，Mapper切面，swagger
