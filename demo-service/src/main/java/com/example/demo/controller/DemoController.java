@@ -20,7 +20,7 @@ import java.util.Date;
  * @Author: fg
  * @Date: 2020/11/09
  */
-@Api(value = "demo", tags = "demo")
+@Api(value = "demo测试接口controller")
 @Slf4j
 @RestController
 @RequestMapping("/demo")
@@ -29,7 +29,7 @@ public class DemoController {
     @Resource
     private ISysLogService sysLogService;
 
-    @ApiOperation("addSysLog接口")
+    @ApiOperation(value = "新增日志", notes = "新增日志新增日志新增日志新增日志新增日志")
     @GetMapping("/addSysLog")
     public ResultVO addSysLog() {
         SysLog sysLog = new SysLog();
@@ -52,15 +52,21 @@ public class DemoController {
      * @param response
      * @return
      */
+    @ApiOperation(value = "文件上传", notes = "文件上传文件上传文件上传文件上传文件上传")
     @PostMapping("/doUploadFile")
     public String uploadFile(HttpServletRequest request, HttpServletResponse response) {
         return sysLogService.doUploadFile(request, response);
     }
 
-    //http://localhost:8081/demo-service/demo/doDownloadFile?fileName=111.jpg
-
+    /**
+     * 文件下载
+     *
+     * @param request
+     * @param response
+     */
+    @ApiOperation(value = "文件下载", notes = "文件下载文件下载文件下载文件下载文件下载文件下载")
     @PostMapping("/doDownloadFile")
-    public void downloadFile(HttpServletRequest request, HttpServletResponse response){
-        sysLogService.doDownloadFile(request,response);
+    public void downloadFile(HttpServletRequest request, HttpServletResponse response) {
+        sysLogService.doDownloadFile(request, response);
     }
 }

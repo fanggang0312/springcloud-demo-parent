@@ -11,7 +11,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 /**
@@ -49,6 +48,4 @@ public class WebConfig implements WebMvcConfigurer, WebMvcRegistrations {
             }
         }
     }
-
-
 }

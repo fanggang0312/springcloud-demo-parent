@@ -2,25 +2,23 @@ package com.example.demo.model;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
- * <p>
  * 系统操作日志表
- * </p>
  *
  * @author fg
  * @since 2020/11/09
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
-@Accessors(chain = true)
-public class SysLog extends Model {
+@NoArgsConstructor
+@AllArgsConstructor
+public class SysLog implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

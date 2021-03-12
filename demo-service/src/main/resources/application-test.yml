@@ -133,3 +133,6 @@ hystrix:
   threadpool:
     default:
       coreSize: 16 #熔断器的核心线程池数
+
+swagger:
+  enable: true
